@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/contact.dart';
 import '../services/api_service.dart';
 import 'detail_screen.dart';
+import 'add_contact_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final ApiService apiService = ApiService();
@@ -12,6 +13,8 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Mes Contacts")),
+
+      // 👇 LISTE DES CONTACTS
       body: FutureBuilder<List<Contact>>(
         future: apiService.fetchContacts(),
         builder: (context, snapshot) {
@@ -53,8 +56,18 @@ class HomeScreen extends StatelessWidget {
             );
           }
 
-          // Cas vide
           return const Center(child: Text("Aucun contact"));
+        },
+      ),
+
+      // 👇 BOUTON AJOUT (BIEN PLACÉ)
+      floatingActionButton: FloatingActionButton(
+        child: const Icon(Icons.add),
+        onPressed: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddContactScreen()),
+          );
         },
       ),
     );
