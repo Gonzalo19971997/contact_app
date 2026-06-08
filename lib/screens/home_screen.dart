@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import '../models/contact.dart';
 import '../services/api_service.dart';
+import 'detail_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final ApiService apiService = ApiService();
+
+  HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -35,11 +38,22 @@ class HomeScreen extends StatelessWidget {
                   ),
                   title: Text(contact.nom),
                   subtitle: Text(contact.telephone),
+
+                  // Navigation vers détail
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => DetailScreen(contact: contact),
+                      ),
+                    );
+                  },
                 );
               },
             );
           }
 
+          // Cas vide
           return const Center(child: Text("Aucun contact"));
         },
       ),
