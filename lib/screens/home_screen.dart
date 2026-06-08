@@ -12,8 +12,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Mes Contacts")),
-
+      appBar: AppBar(title: const Text("Mes Contacts"), centerTitle: true),
       // 👇 LISTE DES CONTACTS
       body: FutureBuilder<List<Contact>>(
         future: apiService.fetchContacts(),
@@ -35,22 +34,35 @@ class HomeScreen extends StatelessWidget {
               itemBuilder: (context, index) {
                 final contact = contacts[index];
 
-                return ListTile(
-                  leading: CircleAvatar(
-                    backgroundImage: NetworkImage(contact.photo),
+                return Card(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
                   ),
-                  title: Text(contact.nom),
-                  subtitle: Text(contact.telephone),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      radius: 25,
+                      backgroundImage: NetworkImage(contact.photo),
+                    ),
 
-                  // Navigation vers détail
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => DetailScreen(contact: contact),
-                      ),
-                    );
-                  },
+                    title: Text(
+                      contact.nom,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+
+                    subtitle: Text(contact.telephone),
+
+                    trailing: const Icon(Icons.arrow_forward_ios),
+
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DetailScreen(contact: contact),
+                        ),
+                      );
+                    },
+                  ),
                 );
               },
             );
@@ -70,6 +82,7 @@ class HomeScreen extends StatelessWidget {
           );
         },
       ),
+      backgroundColor: Colors.grey[100],
     );
   }
 }
