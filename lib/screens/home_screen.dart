@@ -4,6 +4,8 @@ import '../models/contact.dart';
 import '../services/api_service.dart';
 import 'detail_screen.dart';
 import 'add_contact_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,6 +22,14 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isLoading = true;
   String? error;
 
+  Future<void> saveContacts() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    List<String> data = contacts.map((c) => jsonEncode(c.toJson())).toList();
+
+    await prefs.setStringList("contacts", data);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -28,17 +38,29 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // 🔄 Charger API
   void loadContacts() async {
-    try {
-      final data = await apiService.fetchContacts();
+    final prefs = await SharedPreferences.getInstance();
+    final localData = prefs.getStringList("contacts");
+
+    if (localData != null && localData.isNotEmpty) {
       setState(() {
-        contacts = data;
+        contacts = localData
+            .map((e) => Contact.fromJson(jsonDecode(e)))
+            .toList();
         isLoading = false;
       });
-    } catch (e) {
-      setState(() {
-        error = "Erreur de chargement";
-        isLoading = false;
-      });
+    } else {
+      try {
+        final data = await apiService.fetchContacts();
+        setState(() {
+          contacts = data;
+          isLoading = false;
+        });
+      } catch (e) {
+        setState(() {
+          error = "Erreur de chargement";
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -132,6 +154,34 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             );
                           },
+
+                          onLongPress: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text("Supprimer"),
+                                content: const Text(
+                                  "Voulez-vous supprimer ce contact ?",
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text("Annuler"),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        contacts.removeAt(index);
+                                        saveContacts(); // Appel du fonction saveContact()
+                                      });
+                                      Navigator.pop(context);
+                                    },
+                                    child: const Text("Supprimer"),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
                       );
                     },
@@ -153,6 +203,14 @@ class _HomeScreenState extends State<HomeScreen> {
             setState(() {
               contacts.insert(0, newContact);
             });
+
+            if (newContact != null) {
+              setState(() {
+                contacts.insert(0, newContact);
+              });
+
+              saveContacts(); // Appeller la fonction saveContact()
+            }
           }
         },
       ),
