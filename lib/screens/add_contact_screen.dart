@@ -20,7 +20,7 @@ class _AddContactScreenState extends State<AddContactScreen> {
 
   final ImagePicker picker = ImagePicker();
 
-  // 📸 Choisir image depuis galerie
+  // 📸 Choisir image
   Future<void> pickImage() async {
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
@@ -36,7 +36,6 @@ class _AddContactScreenState extends State<AddContactScreen> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
-      // Créer contact (image locale ou image vide)
       Contact newContact = Contact(
         nom,
         email,
@@ -44,7 +43,6 @@ class _AddContactScreenState extends State<AddContactScreen> {
         image != null ? image!.path : "",
       );
 
-      // Retourner le contact à l'écran précédent
       Navigator.pop(context, newContact);
     }
   }
@@ -52,31 +50,56 @@ class _AddContactScreenState extends State<AddContactScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Ajouter un contact")),
+      appBar: AppBar(
+        title: const Text("Ajouter un contact"),
+        centerTitle: true,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
             children: [
-              // Champ Nom
+              // NOM
               TextFormField(
-                decoration: const InputDecoration(labelText: "Nom"),
+                decoration: InputDecoration(
+                  labelText: "Nom",
+                  prefixIcon: const Icon(Icons.person),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                ),
                 onSaved: (value) => nom = value!,
                 validator: (value) => value!.isEmpty ? "Entrer un nom" : null,
               ),
 
-              // Champ Email
+              const SizedBox(height: 15),
+
+              // EMAIL
               TextFormField(
-                decoration: const InputDecoration(labelText: "Email"),
+                decoration: InputDecoration(
+                  labelText: "Email",
+                  prefixIcon: const Icon(Icons.email),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                ),
                 onSaved: (value) => email = value!,
                 validator: (value) =>
                     !value!.contains("@") ? "Email invalide" : null,
               ),
 
-              // Champ Téléphone
+              const SizedBox(height: 15),
+
+              // TELEPHONE
               TextFormField(
-                decoration: const InputDecoration(labelText: "Téléphone"),
+                decoration: InputDecoration(
+                  labelText: "Téléphone",
+                  prefixIcon: const Icon(Icons.phone),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                ),
                 onSaved: (value) => telephone = value!,
                 validator: (value) =>
                     value!.length < 8 ? "Numéro invalide" : null,
@@ -84,22 +107,34 @@ class _AddContactScreenState extends State<AddContactScreen> {
 
               const SizedBox(height: 20),
 
-              // Bouton image
-              ElevatedButton(
+              // BOUTON IMAGE
+              ElevatedButton.icon(
                 onPressed: pickImage,
-                child: const Text("Choisir une image"),
+                icon: const Icon(Icons.image),
+                label: const Text("Choisir une image"),
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
               ),
 
               const SizedBox(height: 10),
 
-              // Aperçu image
+              // APERCU IMAGE
               if (image != null) Image.file(image!, height: 100),
 
               const SizedBox(height: 20),
 
-              // Bouton enregistrer
+              // BOUTON ENREGISTRER
               ElevatedButton(
                 onPressed: saveContact,
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
                 child: const Text("Enregistrer"),
               ),
             ],
