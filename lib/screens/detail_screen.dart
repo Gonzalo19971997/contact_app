@@ -10,12 +10,12 @@ class DetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Détail du contact")),
+      appBar: AppBar(title: const Text("Détail du contact"), centerTitle: true),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // Photo
+            // 📸 Photo
             CircleAvatar(
               radius: 60,
               backgroundImage: NetworkImage(contact.photo),
@@ -23,21 +23,31 @@ class DetailScreen extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // Nom
+            // 🧑 Nom
             Text(
               contact.nom,
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
 
+            const SizedBox(height: 30),
+
+            // 📞 Téléphone
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.phone, color: Colors.blue),
+                title: Text(contact.telephone),
+              ),
+            ),
+
             const SizedBox(height: 10),
 
-            // Email
-            Text(contact.email),
-
-            const SizedBox(height: 10),
-
-            // Téléphone
-            Text(contact.telephone),
+            // 📧 Email
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.email, color: Colors.red),
+                title: Text(contact.email),
+              ),
+            ),
           ],
         ),
       ),
