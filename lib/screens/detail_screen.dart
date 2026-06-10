@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/contact.dart';
+import 'dart:io';
 
 class DetailScreen extends StatelessWidget {
   final Contact contact;
@@ -18,11 +19,14 @@ class DetailScreen extends StatelessWidget {
             // 📸 Photo
             CircleAvatar(
               radius: 60,
-              backgroundImage: NetworkImage(contact.photo),
+              backgroundImage: contact.photo.isNotEmpty
+                  ? (contact.photo.startsWith("http")
+                        ? NetworkImage(contact.photo)
+                        : FileImage(File(contact.photo)) as ImageProvider)
+                  : null,
             ),
 
             const SizedBox(height: 20),
-
             // 🧑 Nom
             Text(
               contact.nom,

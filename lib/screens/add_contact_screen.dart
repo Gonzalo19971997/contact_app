@@ -1,49 +1,48 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import '../models/contact.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class AddContactScreen extends StatefulWidget {
-  const AddContactScreen({super.key});
+  final Contact? contact;
+
+  const AddContactScreen({super.key, this.contact});
 
   @override
   State<AddContactScreen> createState() => _AddContactScreenState();
 }
 
 class _AddContactScreenState extends State<AddContactScreen> {
-  final _formKey = GlobalKey<FormState>();
-
+  // 🔥 VARIABLES
   String nom = "";
   String email = "";
   String telephone = "";
   File? image;
 
-  final ImagePicker picker = ImagePicker();
+  // 🔥 INITIALISATION
+  @override
+  void initState() {
+    super.initState();
 
-  // 📸 Choisir image
-  Future<void> pickImage() async {
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (widget.contact != null) {
+      nom = widget.contact!.nom;
+      email = widget.contact!.email;
+      telephone = widget.contact!.telephone;
+    }
 
-    if (pickedFile != null) {
-      setState(() {
-        image = File(pickedFile.path);
-      });
+    if (widget.contact != null && widget.contact!.photo.isNotEmpty) {
+      image = File(widget.contact!.photo);
     }
   }
 
-  // 💾 Enregistrer contact
-  void saveContact() {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
+  Future<void> pickImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery);
 
-      Contact newContact = Contact(
-        nom,
-        email,
-        telephone,
-        image != null ? image!.path : "",
-      );
-
-      Navigator.pop(context, newContact);
+    if (picked != null) {
+      setState(() {
+        image = File(picked.path);
+      });
     }
   }
 
@@ -51,94 +50,69 @@ class _AddContactScreenState extends State<AddContactScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Ajouter un contact"),
-        centerTitle: true,
+        title: Text(
+          widget.contact == null ? "Ajouter un contact" : "Modifier le contact",
+        ),
       ),
+
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              // NOM
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: "Nom",
-                  prefixIcon: const Icon(Icons.person),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                ),
-                onSaved: (value) => nom = value!,
-                validator: (value) => value!.isEmpty ? "Entrer un nom" : null,
+        child: Column(
+          children: [
+            GestureDetector(
+              onTap: pickImage,
+              child: CircleAvatar(
+                radius: 50,
+                backgroundImage: image != null ? FileImage(image!) : null,
+                child: image == null
+                    ? const Icon(Icons.camera_alt, size: 30)
+                    : null,
               ),
+            ),
+            const SizedBox(height: 20),
 
-              const SizedBox(height: 15),
+            // NOM
+            TextFormField(
+              initialValue: nom,
+              decoration: const InputDecoration(labelText: "Nom"),
+              onChanged: (value) => nom = value,
+            ),
 
-              // EMAIL
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: "Email",
-                  prefixIcon: const Icon(Icons.email),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                ),
-                onSaved: (value) => email = value!,
-                validator: (value) =>
-                    !value!.contains("@") ? "Email invalide" : null,
-              ),
+            const SizedBox(height: 10),
 
-              const SizedBox(height: 15),
+            // EMAIL
+            TextFormField(
+              initialValue: email,
+              decoration: const InputDecoration(labelText: "Email"),
+              onChanged: (value) => email = value,
+            ),
 
-              // TELEPHONE
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: "Téléphone",
-                  prefixIcon: const Icon(Icons.phone),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                ),
-                onSaved: (value) => telephone = value!,
-                validator: (value) =>
-                    value!.length < 8 ? "Numéro invalide" : null,
-              ),
+            const SizedBox(height: 10),
 
-              const SizedBox(height: 20),
+            // TELEPHONE
+            TextFormField(
+              initialValue: telephone,
+              decoration: const InputDecoration(labelText: "Téléphone"),
+              onChanged: (value) => telephone = value,
+            ),
 
-              // BOUTON IMAGE
-              ElevatedButton.icon(
-                onPressed: pickImage,
-                icon: const Icon(Icons.image),
-                label: const Text("Choisir une image"),
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-              ),
+            const SizedBox(height: 20),
 
-              const SizedBox(height: 10),
+            // BOUTON
+            ElevatedButton(
+              onPressed: () {
+                final newContact = Contact(
+                  nom,
+                  email,
+                  telephone,
+                  image != null ? image!.path : "",
+                );
 
-              // APERCU IMAGE
-              if (image != null) Image.file(image!, height: 100),
-
-              const SizedBox(height: 20),
-
-              // BOUTON ENREGISTRER
-              ElevatedButton(
-                onPressed: saveContact,
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                child: const Text("Enregistrer"),
-              ),
-            ],
-          ),
+                Navigator.pop(context, newContact);
+              },
+              child: const Text("Enregistrer"),
+            ),
+          ],
         ),
       ),
     );

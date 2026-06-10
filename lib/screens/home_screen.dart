@@ -1,9 +1,9 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/contact.dart';
 import '../services/api_service.dart';
 import 'detail_screen.dart';
 import 'add_contact_screen.dart';
+import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
@@ -22,6 +22,14 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isLoading = true;
   String? error;
 
+  @override
+  void initState() {
+    super.initState();
+    loadContacts();
+  }
+
+  //Sauvegarde de contact
+
   Future<void> saveContacts() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -30,13 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
     await prefs.setStringList("contacts", data);
   }
 
-  @override
-  void initState() {
-    super.initState();
-    loadContacts();
-  }
-
-  // 🔄 Charger API
+  //Chargement de contact
   void loadContacts() async {
     final prefs = await SharedPreferences.getInstance();
     final localData = prefs.getStringList("contacts");
@@ -49,31 +51,21 @@ class _HomeScreenState extends State<HomeScreen> {
         isLoading = false;
       });
     } else {
-      try {
-        final data = await apiService.fetchContacts();
-        setState(() {
-          contacts = data;
-          isLoading = false;
-        });
-      } catch (e) {
-        setState(() {
-          error = "Erreur de chargement";
-          isLoading = false;
-        });
-      }
+      final data = await apiService.fetchContacts();
+      setState(() {
+        contacts = data;
+        isLoading = false;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // 🔍 Filtrer contacts
     final filtered = contacts.where((c) {
       return c.nom.toLowerCase().contains(search);
     }).toList();
 
     return Scaffold(
-      backgroundColor: Colors.grey[100],
-
       appBar: AppBar(title: const Text("Mes Contacts"), centerTitle: true),
 
       body: isLoading
@@ -134,18 +126,18 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: ListTile(
                           leading: CircleAvatar(
                             radius: 25,
-                            backgroundImage: contact.photo.startsWith("http")
-                                ? NetworkImage(contact.photo)
-                                : FileImage(File(contact.photo))
-                                      as ImageProvider,
+                            backgroundImage: contact.photo.isNotEmpty
+                                ? (contact.photo.startsWith("http")
+                                      ? NetworkImage(contact.photo)
+                                      : FileImage(File(contact.photo))
+                                            as ImageProvider)
+                                : null,
                           ),
-                          title: Text(
-                            contact.nom,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Text(contact.telephone),
-                          trailing: const Icon(Icons.arrow_forward_ios),
 
+                          title: Text(contact.nom),
+                          subtitle: Text(contact.telephone),
+
+                          // 👁 DETAIL
                           onTap: () {
                             Navigator.push(
                               context,
@@ -155,33 +147,71 @@ class _HomeScreenState extends State<HomeScreen> {
                             );
                           },
 
-                          onLongPress: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text("Supprimer"),
-                                content: const Text(
-                                  "Voulez-vous supprimer ce contact ?",
+                          // 🔥 BOUTONS ACTIONS
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // ✏️ MODIFIER
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.edit,
+                                  color: Colors.blue,
                                 ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context),
-                                    child: const Text("Annuler"),
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        contacts.removeAt(index);
-                                        saveContacts(); // Appel du fonction saveContact()
-                                      });
-                                      Navigator.pop(context);
-                                    },
-                                    child: const Text("Supprimer"),
-                                  ),
-                                ],
+                                onPressed: () async {
+                                  final updated = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          AddContactScreen(contact: contact),
+                                    ),
+                                  );
+
+                                  if (updated != null) {
+                                    setState(() {
+                                      contacts[index] = updated;
+                                      saveContacts();
+                                    });
+                                  }
+                                },
                               ),
-                            );
-                          },
+
+                              // 🗑 SUPPRIMER
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                ),
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text("Supprimer"),
+                                      content: const Text(
+                                        "Voulez-vous supprimer ce contact ?",
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context),
+                                          child: const Text("Annuler"),
+                                        ),
+                                        TextButton(
+                                          onPressed: () {
+                                            setState(() {
+                                              contacts.removeAt(index);
+                                              saveContacts();
+                                            });
+                                            Navigator.pop(context);
+                                          },
+                                          child: const Text("Supprimer"),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
                         ),
                       );
                     },
@@ -190,7 +220,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
 
-      // ➕ AJOUT CONTACT
+      // ➕ AJOUT
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
         onPressed: () async {
@@ -202,15 +232,8 @@ class _HomeScreenState extends State<HomeScreen> {
           if (newContact != null) {
             setState(() {
               contacts.insert(0, newContact);
+              saveContacts();
             });
-
-            if (newContact != null) {
-              setState(() {
-                contacts.insert(0, newContact);
-              });
-
-              saveContacts(); // Appeller la fonction saveContact()
-            }
           }
         },
       ),
